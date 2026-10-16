@@ -7,14 +7,52 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Data.SqlClient;
+
+
 
 namespace Project_StudentManagement
 {
     public partial class frmStudent : Form
     {
+        string connStr = @"Data Source=LAPTOP-RPV7OC8J\MSSQLSERVER04;Initial Catalog=StudentDB;Integrated Security=True;TrustServerCertificate=True";
+        
         public frmStudent()
         {
             InitializeComponent();
+            SqlConnection conn = new SqlConnection(connStr);
+            conn.Open();
+        }
+        private void LoadSinhVien()
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = @"
+                SELECT
+                    StudentCode AS MSSV,
+                    Phone AS SoDienThoai,
+                    Class AS Lop,
+                    FullName AS HoTen,
+                    DateOfBirth AS NgaySinh,
+                    Email
+                FROM Students";
+
+                    SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
+
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    dgvStudents.AutoGenerateColumns = false;
+
+                    dgvStudents.DataSource = dt;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tải dữ liệu: " + ex.Message);
+            }
         }
         private void txtTimKiem_Enter(object sender, EventArgs e)
         {
@@ -37,13 +75,12 @@ namespace Project_StudentManagement
         {
             txtTimKiem.Text = "Nhập MSSV hoặc tên để tìm kiếm...";
             txtTimKiem.ForeColor = Color.Gray;
+            LoadSinhVien();
         }
 
         private void btnExit_Click(object sender, EventArgs e)
         {
             Close();
         }
-
-        
     }
 }

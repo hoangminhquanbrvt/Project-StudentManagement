@@ -1,0 +1,23 @@
+Clone repository từ GitHub.
+
+
+
+Mở SSMS, chọn Databases → Restore Database.
+
+
+Chọn Device → ... → Add.
+
+
+Chọn file StudentDB.bak đã tải về.
+
+
+
+Mở file .sln bằng Visual Studio.
+
+
+
+Sửa chuỗi kết nối trong App.config cho khớp với SQL Server trên máy người đó.
+
+
+
+Build và chạy ứng dụng.
