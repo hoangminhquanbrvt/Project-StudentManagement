@@ -1,43 +1,85 @@
-using Microsoft.Extensions.Logging;
-using Project_StudentManagement.DAL;
-using Project_StudentManagement.DTO;
 
-namespace Project_StudentManagement.BLL;
+﻿using System;
+using System.Collections.Generic;
+using StudentManagement.DAL;
+using StudentManagement.DTO;
 
-/// <summary>Quy tắc nghiệp vụ độc lập với WinForms và SQL.</summary>
-public sealed class StudentBLL
+namespace StudentManagement.BLL
 {
-    private readonly StudentDAL _dal;
-    private readonly ILogger<StudentBLL> _logger;
-    public StudentBLL(StudentDAL dal, ILogger<StudentBLL> logger) { _dal = dal; _logger = logger; }
-
-    public List<StudentDTO> GetStudents() => _dal.GetAll();
-    public List<StudentDTO> SearchStudents(string? keyword)
+    // BLL xử lý quy tắc nghiệp vụ.
+    // Không viết SQL và không điều khiển giao diện WinForms.
+    public class StudentBLL
     {
-        var normalized = (keyword ?? "").Trim();
-        _logger.LogDebug(new EventId(2001, "SearchRequested"), "Search requested with keyword {SearchKeyword}", normalized);
-        return _dal.Search(normalized);
-    }
-    public void AddStudent(StudentDTO s) { ValidateStudent(s); _dal.Insert(s); }
-    public bool UpdateStudent(StudentDTO s) { ValidateStudent(s); if (string.IsNullOrWhiteSpace(s.StudentCode)) throw new ArgumentException("Hãy chọn sinh viên cần sửa."); return _dal.Update(s) > 0; }
-    public bool DeleteStudent(string code) { if (string.IsNullOrWhiteSpace(code)) throw new ArgumentException("Hãy chọn sinh viên cần xóa."); return _dal.Delete(code.Trim()) > 0; }
+        private readonly StudentDAL dal = new StudentDAL();
 
-    public static void ValidateStudent(StudentDTO s)
-    {
-        if (s == null) throw new ArgumentNullException(nameof(s));
-        s.StudentCode = (s.StudentCode ?? "").Trim(); s.FullName = (s.FullName ?? "").Trim();
-        s.ClassName = (s.ClassName ?? "").Trim(); s.Phone = (s.Phone ?? "").Trim(); s.Email = (s.Email ?? "").Trim();
-        if (s.StudentCode.Length == 0) throw new ArgumentException("Mã sinh viên không được để trống.");
-        if (s.FullName.Length == 0) throw new ArgumentException("Họ tên không được để trống.");
-        if (s.StudentCode.Length > 50 || s.FullName.Length > 200 || s.ClassName.Length > 100 || s.Phone.Length > 30 || s.Email.Length > 200)
-            throw new ArgumentException("Thông tin vượt quá độ dài cho phép.");
-        if (s.Email.Length > 0 && !s.Email.Contains('@')) throw new ArgumentException("Email không hợp lệ.");
-    }
+        public List<StudentDTO> GetStudents()
+        {
+            return dal.GetAll();
+        }
 
-    public static bool IsValidGpa(double gpa) => !double.IsNaN(gpa) && !double.IsInfinity(gpa) && gpa >= 0.0 && gpa <= 4.0;
-    public static void ValidateGpa(double gpa)
-    {
-        if (!IsValidGpa(gpa)) throw new ArgumentOutOfRangeException(nameof(gpa), "GPA phải nằm trong khoảng từ 0 đến 4.");
+        public List<StudentDTO> SearchStudents(string code)
+        {
+            return dal.Search((code ?? "").Trim());
+        }
+
+        public void AddStudent(StudentDTO student)
+        {
+            CheckStudent(student);
+            dal.Insert(student);
+        }
+
+        public bool UpdateStudent(StudentDTO student)
+        {
+            if (student == null)
+                throw new ArgumentNullException("student");
+
+            if (student.Id <= 0)
+                throw new ArgumentException("Hãy chọn sinh viên cần sửa.");
+
+            CheckStudent(student);
+
+            return dal.Update(student) == 1;
+        }
+
+        public bool DeleteStudent(int id)
+        {
+            if (id <= 0)
+                throw new ArgumentException("Hãy chọn sinh viên cần xóa.");
+
+            return dal.Delete(id) == 1;
+        }
+
+        private static void CheckStudent(StudentDTO s)
+        {
+            if (s == null)
+                throw new ArgumentNullException("s");
+
+            s.Code = (s.Code ?? "").Trim();
+            s.FullName = (s.FullName ?? "").Trim();
+            s.ClassName = (s.ClassName ?? "").Trim();
+            s.Major = (s.Major ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(s.Code) ||
+                string.IsNullOrWhiteSpace(s.FullName))
+            {
+                throw new ArgumentException(
+                    "Mã sinh viên và họ tên không được để trống.");
+            }
+
+            if (!s.Code.StartsWith("SV", StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    "Mã sinh viên phải bắt đầu bằng SV.");
+            }
+
+            if (s.Code.Length > 20 ||
+                s.FullName.Length > 100 ||
+                s.ClassName.Length > 50 ||
+                s.Major.Length > 100)
+            {
+                throw new ArgumentException(
+                    "Thông tin vượt quá độ dài cho phép.");
+            }
+        }
     }
-    public static bool IsValidSearchKeyword(string? keyword) => !string.IsNullOrWhiteSpace(keyword);
 }

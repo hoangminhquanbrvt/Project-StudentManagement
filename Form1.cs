@@ -82,5 +82,10 @@ namespace Project_StudentManagement
         {
             Close();
         }
+
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

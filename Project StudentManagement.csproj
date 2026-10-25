@@ -46,6 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BLL\StudentBLL.cs" />
+    <Compile Include="DAL\StudentDAL.cs" />
+    <Compile Include="DTO\StudentDTO.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
