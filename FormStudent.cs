@@ -13,15 +13,13 @@ using System.Data.SqlClient;
 
 namespace Project_StudentManagement
 {
-    public partial class frmStudent : Form
+    public partial class FormStudent : Form
     {
         string connStr = @"Data Source=LAPTOP-RPV7OC8J\MSSQLSERVER04;Initial Catalog=StudentDB;Integrated Security=True;TrustServerCertificate=True";
         
-        public frmStudent()
+        public FormStudent()
         {
             InitializeComponent();
-            SqlConnection conn = new SqlConnection(connStr);
-            conn.Open();
         }
         private void LoadSinhVien()
         {
