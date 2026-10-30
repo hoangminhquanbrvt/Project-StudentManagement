@@ -12,7 +12,7 @@ namespace StudentManagement.DAL
     {
         // Đổi tên server nếu SQL Server trên máy có tên khác.
         private readonly string connectionString =
-            @"Server=LAPTOP-RPV7OC8J\MSSQLSERVER04;Database=StudentDB;Integrated Security=True;";
+            @"Server=Data Source=localhost\SQLEXPRESS;Database=StudentDB;Integrated Security=True;";
 
         public List<StudentDTO> GetAll()
         {

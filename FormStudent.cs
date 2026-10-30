@@ -15,7 +15,7 @@ namespace Project_StudentManagement
 {
     public partial class FormStudent : Form
     {
-        string connStr = @"Data Source=LAPTOP-RPV7OC8J\MSSQLSERVER04;Initial Catalog=StudentDB;Integrated Security=True;TrustServerCertificate=True";
+        string connStr = @"Data Source=localhost\SQLEXPRESS;Initial Catalog=StudentDB;Integrated Security=True;TrustServerCertificate=True";
         
         public FormStudent()
         {
