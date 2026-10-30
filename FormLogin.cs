@@ -13,7 +13,7 @@ namespace Project_StudentManagement
 {
     public partial class FormLogin : Form
     {
-        string connectionString = @"Data Source=LAPTOP-RPV7OC8J\MSSQLSERVER04;Initial Catalog=StudentDB;Integrated Security=True;";
+        string connectionString = @"Data Source=localhost\SQLEXPRESS;Initial Catalog=StudentDB;Integrated Security=True;";
         public FormLogin()
         {
             InitializeComponent();

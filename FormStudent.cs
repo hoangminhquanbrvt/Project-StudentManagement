@@ -68,6 +68,63 @@ namespace Project_StudentManagement
                 txtTimKiem.ForeColor = Color.Gray;
             }
         }
+        
+        private void TimKiemSinhVien()
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string keyword = txtTimKiem.Text.Trim();
+                    if (string.IsNullOrWhiteSpace(keyword) ||
+                        keyword == "Nhập MSSV hoặc tên để tìm kiếm...")
+                    {
+                        LoadSinhVien();
+                        return;
+                    }
+
+                    string sql = @"
+                SELECT
+                    StudentCode AS MSSV,
+                    Phone AS SoDienThoai,
+                    Class AS Lop,
+                    FullName AS HoTen,
+                    DateOfBirth AS NgaySinh,
+                    Email
+                FROM Students
+                WHERE StudentCode LIKE @TuKhoa
+                   OR FullName LIKE @TuKhoa";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@TuKhoa", "%" + keyword + "%");
+
+                        SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+
+                        adapter.Fill(dt);
+
+                        dgvStudents.DataSource = dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tìm kiếm: " + ex.Message);
+            }
+        }
+        private void txtTimKiem_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                TimKiemSinhVien();
+                e.SuppressKeyPress = true;
+            }
+        }
+        private void btnTimKiem_Click(object sender, EventArgs e)
+        {
+            TimKiemSinhVien();
+        }
 
         private void frmStudent_Load(object sender, EventArgs e)
         {
@@ -143,6 +200,8 @@ namespace Project_StudentManagement
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
-        }
+        }          
+        
+    
     }
 }
