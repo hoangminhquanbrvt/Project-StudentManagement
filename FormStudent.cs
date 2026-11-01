@@ -21,6 +21,7 @@ namespace Project_StudentManagement
         {
             InitializeComponent();
         }
+        private string selectedMSSV = ""; // MSSV gốc của sinh viên đang chọn, rỗng = chưa chọn
         private void LoadSinhVien()
         {
             try
@@ -113,6 +114,18 @@ namespace Project_StudentManagement
                 MessageBox.Show("Lỗi tìm kiếm: " + ex.Message);
             }
         }
+
+        private void ClearInputs()
+        {
+            txtMSV.Clear();
+            txtHoTen.Clear();
+            txtSDT.Clear();
+            txtLop.Clear();
+            txtEmail.Clear();
+            dtpNgaySinh.Value = DateTime.Today;
+            txtMSV.Focus();
+        }
+
         private void txtTimKiem_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -185,13 +198,7 @@ namespace Project_StudentManagement
                 LoadSinhVien();
 
                 // Xóa dữ liệu nhập
-                txtMSV.Clear();
-                txtHoTen.Clear();
-                txtSDT.Clear();
-                txtLop.Clear();
-                txtEmail.Clear();
-
-                txtMSV.Focus();
+                ClearInputs();
             }
             catch (Exception ex)
             {
@@ -200,8 +207,152 @@ namespace Project_StudentManagement
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
-        }          
-        
-    
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            txtTimKiem.Text = "";
+            txtTimKiem_Leave(null, EventArgs.Empty); // Đặt lại chữ gợi ý trong ô tìm kiếm
+            ClearInputs();
+            LoadSinhVien();
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(selectedMSSV))
+            {
+                MessageBox.Show("Vui lòng chọn sinh viên cần xóa trong danh sách!",
+                    "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DialogResult confirm = MessageBox.Show(
+                $"Bạn có chắc muốn xóa sinh viên {txtHoTen.Text} ({selectedMSSV})?\nHành động này không thể hoàn tác.",
+                "Xác nhận xóa",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes) return;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                using (SqlCommand cmd = new SqlCommand(
+                    "DELETE FROM Students WHERE StudentCode = @MSSV", conn))
+                {
+                    cmd.Parameters.AddWithValue("@MSSV", selectedMSSV);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+
+                MessageBox.Show("Xóa sinh viên thành công!",
+                    "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                LoadSinhVien();
+                ClearInputs();
+            }
+            catch (SqlException ex) when (ex.Number == 547)
+            {
+                MessageBox.Show("Không thể xóa vì sinh viên này đang có dữ liệu liên quan ở bảng khác.",
+                    "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi xóa sinh viên: " + ex.Message,
+                    "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnEdit_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(selectedMSSV))
+            {
+                MessageBox.Show("Vui lòng chọn sinh viên cần sửa trong danh sách!",
+                    "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtMSV.Text) ||
+                string.IsNullOrWhiteSpace(txtHoTen.Text) ||
+                string.IsNullOrWhiteSpace(txtLop.Text))
+            {
+                MessageBox.Show("Vui lòng nhập MSSV, họ tên và lớp!",
+                    "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (MessageBox.Show("Bạn có chắc muốn cập nhật thông tin sinh viên này?",
+                "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                using (SqlCommand cmd = new SqlCommand(@"
+            UPDATE Students
+            SET StudentCode = @MSSVMoi,
+                FullName    = @HoTen,
+                Phone       = @SDT,
+                Class       = @Lop,
+                DateOfBirth = @NgaySinh,
+                Email       = @Email
+            WHERE StudentCode = @MSSVCu", conn))
+                {
+                    cmd.Parameters.AddWithValue("@MSSVCu", selectedMSSV);       // MSSV gốc
+                    cmd.Parameters.AddWithValue("@MSSVMoi", txtMSV.Text.Trim()); // MSSV mới (có thể đã sửa)
+                    cmd.Parameters.AddWithValue("@HoTen", txtHoTen.Text.Trim());
+                    cmd.Parameters.AddWithValue("@SDT", txtSDT.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Lop", txtLop.Text.Trim());
+                    cmd.Parameters.AddWithValue("@NgaySinh", dtpNgaySinh.Value.Date);
+                    cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
+
+                    conn.Open();
+                    int rows = cmd.ExecuteNonQuery();
+
+                    if (rows == 0)
+                    {
+                        MessageBox.Show("Không tìm thấy sinh viên này, có thể đã bị xóa.",
+                            "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                }
+
+                MessageBox.Show("Cập nhật sinh viên thành công!",
+                    "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                LoadSinhVien();
+                ClearInputs();
+            }
+            catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601)
+            {
+                MessageBox.Show("MSSV này đã tồn tại!",
+                    "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi cập nhật sinh viên: " + ex.Message,
+                    "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void dgvStudents_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            DataRowView row = dgvStudents.Rows[e.RowIndex].DataBoundItem as DataRowView;
+            if (row == null) return;
+
+            selectedMSSV = row["MSSV"].ToString();
+            txtMSV.Text = selectedMSSV;
+            txtHoTen.Text = row["HoTen"].ToString();
+            txtSDT.Text = row["SoDienThoai"].ToString();
+            txtLop.Text = row["Lop"].ToString();
+            txtEmail.Text = row["Email"].ToString();
+
+            if (row["NgaySinh"] != DBNull.Value)
+                dtpNgaySinh.Value = Convert.ToDateTime(row["NgaySinh"]);
+
+        }
     }
 }
